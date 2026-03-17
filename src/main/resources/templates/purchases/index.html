@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Список покупок</title>
+    <link href="/css/bootstrap/bootstrap.css" rel="stylesheet">
+    <link href="/css/purchases.css" rel="stylesheet">
+    <style>
+
+    </style>
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Список покупок для: <span th:text="${userName}" class="text-primary">Пользователь</span></h2>
+        <span class="badge bg-secondary" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}"></span>
+    </div>
+
+    <div class="mb-4">
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#batchAddModal">
+            Добавить записи
+        </button>
+    </div>
+
+    <div class="modal fade" id="batchAddModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Добавление покупок пачкой</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body custom-modal-body">
+                    <table class="table align-middle">
+                        <thead class="table-light sticky-top">
+                        <tr>
+                            <th style="width: 15%;">Сумма</th>
+                            <th style="width: 20%;">Дата</th>
+                            <th style="width: 25%;">Категория</th>
+                            <th>Комментарий</th>
+                            <th style="width: 50px;"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="batchTableBody"></tbody>
+                    </table>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addBatchRow()">+ Строка</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-success" onclick="submitBatch()">Сохранить всё</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm">
+        <table class="table table-hover table-bordered bg-white align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th style="width: 15%;">Сумма</th>
+                <th style="width: 15%;">Дата</th>
+                <th style="width: 20%;">Категория</th>
+                <th>Комментарий</th>
+                <th class="text-center" style="width: 200px;">Действие</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${purchases}" th:data-id="${p.id}">
+                <td>
+                    <input type="number" step="0.01" class="table-input row-field"
+                           th:value="${p.amt % 1 == 0 ? #numbers.formatDecimal(p.amt, 0, 0) : p.amt}"
+                           th:data-original="${p.amt % 1 == 0 ? #numbers.formatDecimal(p.amt, 0, 0) : p.amt}"
+                           oninput="checkRowChanges(this)">
+                </td>
+                <td>
+                    <input type="date" class="table-input row-field" th:value="${p.date}"
+                           th:data-original="${p.date}" oninput="checkRowChanges(this)">
+                </td>
+                <td class="position-relative">
+                    <input type="text" class="table-input row-field b-cat"
+                           th:value="${p.category}"
+                           th:data-original="${p.category}"
+                           oninput="handleCategoryInput(this)"
+                           onfocus="handleCategoryInput(this)">
+                    <ul class="category-dropdown"></ul>
+                </td>
+                <td>
+                    <input type="text" class="table-input row-field" th:value="${p.comments}"
+                           th:data-original="${p.comments}" oninput="checkRowChanges(this)">
+                </td>
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                        <button th:id="'apply-' + ${p.id}" class="btn btn-success btn-sm d-none"
+                                th:onclick="'saveRow(' + ${p.id} + ')'">Применить</button>
+                        <button th:id="'reset-' + ${p.id}" class="btn btn-outline-secondary btn-sm d-none"
+                                th:onclick="'resetRow(' + ${p.id} + ')'">Вернуть</button>
+
+                        <form th:action="@{/purchases/{id}(id=${p.id})}" method="post" onsubmit="return confirm('Удалить?')">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav th:if="${totalPages > 1}">
+        <ul class="pagination justify-content-center mt-4">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/purchases(page=${currentPage - 1})}">&laquo;</a>
+            </li>
+
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'active'"><a class="page-link" th:href="@{/purchases(page=0)}">1</a></li>
+            <li class="page-item disabled" th:if="${currentPage > 2}"><span class="page-link">...</span></li>
+
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <li class="page-item" th:if="${i > 0 && i < totalPages - 3 && i >= currentPage - 1 && i <= currentPage + 1}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/purchases(page=${i})}" th:text="${i + 1}"></a>
+                </li>
+            </th:block>
+
+            <li class="page-item disabled" th:if="${currentPage < totalPages - 4}"><span class="page-link">...</span></li>
+            <th:block th:each="i : ${#numbers.sequence(totalPages - 3, totalPages - 1)}">
+                <li class="page-item" th:if="${i > 0}" th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/purchases(page=${i})}" th:text="${i + 1}"></a>
+                </li>
+            </th:block>
+
+            <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/purchases(page=${currentPage + 1})}">&raquo;</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/purchases.js"></script>
+
+</body>
+</html>
