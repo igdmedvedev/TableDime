@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,7 +16,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Book;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,9 +40,13 @@ public class PurchaseController {
     @GetMapping
     public String showPurchases(Model model,
                                 @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-                                @RequestParam(defaultValue = "10") int size) {
+                                @RequestParam(defaultValue = "10") int size,
+                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+                                @RequestParam(required = false) String category,
+                                @RequestParam(required = false) String comments) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("date", "category", "amt").descending());
-        Page<Purchase> purchases = purchaseService.collectPurchases(pageable);
+        Page<Purchase> purchases = purchaseService.collectPurchases(pageable, startDate, endDate, category, comments);
 
         model.addAttribute("purchases", purchases.getContent());
         model.addAttribute("userName", "userName");
@@ -75,9 +79,10 @@ public class PurchaseController {
     }
 
     @DeleteMapping("/{id}")
-    public String deletePurchase(@PathVariable Integer id) {
+    @ResponseBody
+    public ResponseEntity<?> deletePurchase(@PathVariable Integer id) {
         purchaseService.delete(id);
-        return "redirect:/purchases";
+        return ResponseEntity.ok("Success");
     }
 
     private Map<String, String> collectErrors(BindingResult result) {

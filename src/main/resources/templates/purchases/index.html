@@ -10,11 +10,46 @@
     </style>
 </head>
 <body class="bg-light">
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form th:action="@{/purchases}" method="get" class="row g-3 align-items-end">
+            <input type="hidden" name="page" value="0">
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Период (с - по)</label>
+                <div class="input-group input-group-sm">
+                    <input type="date" name="startDate" class="form-control" th:value="${param.startDate}" placeholder="От">
+                    <input type="date" name="endDate" class="form-control" th:value="${param.endDate}" placeholder="До">
+                </div>
+            </div>
+
+            <div class="col-md-3 position-relative">
+                <label class="form-label small fw-bold">Категория</label>
+                <input type="text" name="category" class="form-control form-control-sm b-cat"
+                       th:value="${param.category}" placeholder="Поиск по категории..."
+                       oninput="handleCategoryInput(this)" autocomplete="off">
+                <ul class="category-dropdown"></ul>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Комментарий</label>
+                <input type="text" name="comment" class="form-control form-control-sm"
+                       th:value="${param.comment}" placeholder="Фраза в комментарии...">
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Найти</button>
+                <a th:href="@{/purchases}" class="btn btn-outline-secondary btn-sm">Сброс</a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!--div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Список покупок для: <span th:text="${userName}" class="text-primary">Пользователь</span></h2>
         <span class="badge bg-secondary" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}"></span>
-    </div>
+    </div-->
 
     <div class="mb-4">
         <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#batchAddModal">
@@ -94,10 +129,8 @@
                         <button th:id="'reset-' + ${p.id}" class="btn btn-outline-secondary btn-sm d-none"
                                 th:onclick="'resetRow(' + ${p.id} + ')'">Вернуть</button>
 
-                        <form th:action="@{/purchases/{id}(id=${p.id})}" method="post" onsubmit="return confirm('Удалить?')">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="btn btn-outline-danger btn-sm">Удалить</button>
-                        </form>
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                th:onclick="'deleteRow(' + ${p.id} + ')'">Удалить</button>
                     </div>
                 </td>
             </tr>
@@ -117,19 +150,19 @@
             <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
                 <li class="page-item" th:if="${i > 0 && i < totalPages - 3 && i >= currentPage - 1 && i <= currentPage + 1}"
                     th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/purchases(page=${i})}" th:text="${i + 1}"></a>
+                    <a class="page-link" th:href="@{/purchases(page=${i}, startDate=${param.startDate}, endDate=${param.endDate}, category=${param.category}, comment=${param.comment})}" th:text="${i + 1}"></a>
                 </li>
             </th:block>
 
             <li class="page-item disabled" th:if="${currentPage < totalPages - 4}"><span class="page-link">...</span></li>
             <th:block th:each="i : ${#numbers.sequence(totalPages - 3, totalPages - 1)}">
                 <li class="page-item" th:if="${i > 0}" th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/purchases(page=${i})}" th:text="${i + 1}"></a>
+                    <a class="page-link" th:href="@{/purchases(page=${i}, startDate=${param.startDate}, endDate=${param.endDate}, category=${param.category}, comment=${param.comment})}" th:text="${i + 1}"></a>
                 </li>
             </th:block>
 
             <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                <a class="page-link" th:href="@{/purchases(page=${currentPage + 1})}">&raquo;</a>
+                <a class="page-link" th:href="@{/purchases(page=${currentPage + 1}, startDate=${param.startDate}, endDate=${param.endDate}, category=${param.category}, comment=${param.comment})}">&raquo;</a>
             </li>
         </ul>
     </nav>

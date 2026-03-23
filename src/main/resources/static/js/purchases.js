@@ -159,10 +159,11 @@ document.querySelector('.custom-modal-body').addEventListener('scroll', () => {
     document.querySelectorAll('.category-dropdown').forEach(d => d.style.display = 'none');
 });
 
-// Закрытие выпадающих списков при клике вне
 document.addEventListener('click', (e) => {
     if (!e.target.classList.contains('b-cat')) {
-        document.querySelectorAll('.category-dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.category-dropdown').forEach(d => {
+            d.style.display = 'none';
+        });
     }
 });
 
@@ -191,6 +192,20 @@ async function submitBatch() {
         rows.forEach(row => showErrors(row, errors));
     } else {
         alert("Ошибка при сохранении пачки данных");
+    }
+}
+
+async function deleteRow(id) {
+    if (!confirm('Удалить запись?')) return;
+
+    const res = await fetch(`/purchases/${id}`, {
+        method: 'DELETE'
+    });
+
+    if (res.ok) {
+        window.location.reload(); // Или удалите строку из DOM через row.remove()
+    } else {
+        alert("Ошибка при удалении");
     }
 }
 

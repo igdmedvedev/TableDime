@@ -1,6 +1,7 @@
 package org.purchases.services;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
 import org.purchases.models.Purchase;
 import org.purchases.repositories.PurchaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,12 +27,38 @@ public class PurchaseService {
         this.purchaseRepository = purchaseRepository;
     }
 
+    public Page<Purchase> collectPurchases(
+            Pageable pageable,
+            LocalDate startDate,
+            LocalDate endDate,
+            String category,
+            String comment) {
+        return purchaseRepository.findAll((root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("date"), endDate));
+            }
+            if (category != null && !category.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("category")), "%" + category.toLowerCase() + "%"));
+            }
+            if (comment != null && !comment.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("comments")), "%" + comment.toLowerCase() + "%"));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        }, pageable);
+    }
     public Page<Purchase> collectPurchases(Pageable pageable) {
         return purchaseRepository.findAll(pageable);
     }
     public List<Purchase> collectPurchases() {
         return purchaseRepository.findAll();
     }
+
     public Purchase loadByPk(Integer id) {
         Optional<Purchase> purchase = purchaseRepository.findById(id);
         if (purchase.isEmpty()) {
