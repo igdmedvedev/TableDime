@@ -61,3 +61,13 @@
     white-space: nowrap;
     z-index: 10;
 }
+
+#reportsModal .modal-body {
+    min-height: 400px;
+}
+#reportsModal .table-sm {
+    font-size: 0.9rem;
+}
+.nav-tabs .nav-link {
+    cursor: pointer;
+}

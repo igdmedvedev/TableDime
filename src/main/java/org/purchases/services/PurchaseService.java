@@ -59,6 +59,16 @@ public class PurchaseService {
         return purchaseRepository.findAll();
     }
 
+    public List<PurchaseRepository.CategorySpending> collectSpendingByPeriod(LocalDate start, LocalDate end) {
+        return purchaseRepository.findCategorySpendingByPeriod(start, end);
+    }
+
+    public List<PurchaseRepository.CategorySpending> collectSpendingByPeriod(LocalDate anchor, Integer page) {
+        LocalDate start = anchor.minusMonths(page);
+        LocalDate end = anchor.minusDays(1).minusMonths(page - 1);
+        return purchaseRepository.findCategorySpendingByPeriod(start, end);
+    }
+
     public Purchase loadByPk(Integer id) {
         Optional<Purchase> purchase = purchaseRepository.findById(id);
         if (purchase.isEmpty()) {

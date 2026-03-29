@@ -2,6 +2,7 @@ package org.purchases.controllers;
 
 import jakarta.validation.Valid;
 import org.purchases.models.Purchase;
+import org.purchases.repositories.PurchaseRepository;
 import org.purchases.services.PurchaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -54,6 +55,22 @@ public class PurchaseController {
         model.addAttribute("totalPages", purchases.getTotalPages());
 
         return "purchases/index";
+    }
+
+    @GetMapping("/spending-by-absolute-period")
+    @ResponseBody
+    public List<PurchaseRepository.CategorySpending> getSpendingByPeriod(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return purchaseService.collectSpendingByPeriod(startDate, endDate);
+    }
+
+    @GetMapping("/spending-by-relative-period")
+    @ResponseBody
+    public List<PurchaseRepository.CategorySpending> getSpendingByPeriod(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate anchor,
+            @RequestParam Integer page) {
+        return purchaseService.collectSpendingByPeriod(anchor, page);
     }
 
     @PostMapping("/batch")

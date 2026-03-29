@@ -238,3 +238,138 @@ function showErrors(row, errors) {
         }
     }
 }
+
+let currentRelPage = 0;
+const reportsModal = new bootstrap.Modal(document.getElementById('reportsModal'));
+
+function openReportsModal() {
+    const now = new Date();
+
+    // 1. Абсолютный период
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // ВАЖНО: используем formatDateForInput
+    document.getElementById('absStartDate').value = formatDateForInput(firstDay);
+    document.getElementById('absEndDate').value = formatDateForInput(lastDay);
+
+    // 2. Относительный период
+    let anchorDate = new Date(now.getFullYear(), now.getMonth(), 15);
+    if (now.getDate() < 15) {
+        anchorDate.setMonth(anchorDate.getMonth() - 1);
+    }
+
+    // ВАЖНО: используем formatDateForInput
+    document.getElementById('relAnchorDate').value = formatDateForInput(anchorDate);
+
+    currentRelPage = 0;
+    reportsModal.show();
+    loadAbsoluteReport();
+}
+
+// Вспомогательная функция для форматирования даты в YYYY-MM-DD
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${day}.${month}.${year}`;
+}
+
+function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Универсальный рендер таблицы для обоих отчетов
+function renderReportTable(containerId, data) {
+    const container = document.getElementById(containerId);
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning py-2">Нет данных за этот период</div>';
+        return;
+    }
+
+    let html = `
+        <table class="table table-sm table-striped mt-2">
+            <thead class="table-secondary">
+                <tr><th>Категория</th><th class="text-end">Сумма</th></tr>
+            </thead>
+            <tbody>
+    `;
+
+    let total = 0;
+    data.forEach(item => {
+        total += item.amt;
+        const displayAmt = item.amt % 1 === 0 ? item.amt : item.amt.toFixed(2);
+        html += `<tr><td>${item.category}</td><td class="text-end fw-bold">${displayAmt}</td></tr>`;
+    });
+
+    html += `
+            </tbody>
+            <tfoot class="table-light">
+                <tr><td class="fw-bold">ИТОГО:</td><td class="text-end text-primary fw-bold">${total.toFixed(2)}</td></tr>
+            </tfoot>
+        </table>
+    `;
+    container.innerHTML = html;
+}
+
+// Логика Отчета №1
+async function loadAbsoluteReport() {
+    const start = document.getElementById('absStartDate').value;
+    const end = document.getElementById('absEndDate').value;
+
+    const res = await fetch(`/purchases/spending-by-absolute-period?startDate=${start}&endDate=${end}`);
+    const data = await res.json();
+    renderReportTable('absoluteResult', data);
+}
+
+async function loadRelativeReport() {
+    const anchorVal = document.getElementById('relAnchorDate').value; // Тут придет YYYY-MM-DD
+    if (!anchorVal) return;
+
+    // Правильный парсинг даты из инпута без влияния часового пояса
+    const [y, m, d] = anchorVal.split('-').map(Number);
+    const anchor = new Date(y, m - 1, d);
+
+    const page = currentRelPage;
+
+    const startDate = new Date(anchor);
+    startDate.setMonth(anchor.getMonth() - page);
+
+    const endDate = new Date(anchor);
+    endDate.setDate(anchor.getDate() - 1);
+    endDate.setMonth(endDate.getMonth() - (page - 1));
+
+    // Текст пишем красиво через точки
+    document.getElementById('relPeriodLabel').innerText =
+        `Период: ${formatDate(startDate)} — ${formatDate(endDate)}`;
+
+    //document.getElementById('relPageLabel').innerText = page;
+
+    try {
+        const res = await fetch(`/purchases/spending-by-relative-period?anchor=${anchorVal}&page=${page}`);
+        const data = await res.json();
+        renderReportTable('relativeResult', data);
+    } catch (e) {
+        console.error("Ошибка загрузки отчета", e);
+    }
+}
+
+function changeRelPage(delta) {
+    currentRelPage = Math.max(0, currentRelPage + delta);
+    loadRelativeReport();
+}
+
+// Слушатель изменения даты в относительном отчете
+document.getElementById('relAnchorDate').addEventListener('change', () => {
+    currentRelPage = 0;
+    loadRelativeReport();
+});
+
+document.getElementById('relative-tab').addEventListener('shown.bs.tab', function () {
+    if (!document.getElementById('relativeResult').innerHTML) {
+        loadRelativeReport();
+    }
+});

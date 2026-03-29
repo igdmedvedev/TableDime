@@ -57,6 +57,71 @@
         </button>
     </div>
 
+    <div class="mb-4 d-inline-block">
+        <button type="button" class="btn btn-outline-info shadow-sm" onclick="openReportsModal()">
+            Собрать отчет
+        </button>
+    </div>
+
+    <div class="modal fade" id="reportsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Аналитика расходов</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="reportTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="absolute-tab" data-bs-toggle="tab" data-bs-target="#absoluteReport" type="button">За период</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="relative-tab" data-bs-toggle="tab" data-bs-target="#relativeReport" type="button">По страницам</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content border p-3 rounded bg-light">
+                        <div class="tab-pane fade show active" id="absoluteReport">
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col">
+                                    <label class="small fw-bold">Начало</label>
+                                    <input type="date" id="absStartDate" class="form-control form-control-sm">
+                                </div>
+                                <div class="col">
+                                    <label class="small fw-bold">Конец</label>
+                                    <input type="date" id="absEndDate" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary btn-sm" onclick="loadAbsoluteReport()">Показать</button>
+                                </div>
+                            </div>
+                            <div id="absoluteResult"></div>
+                        </div>
+
+                        <div class="tab-pane fade" id="relativeReport">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="d-flex flex-column">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <label class="small fw-bold mb-0">Якорь:</label>
+                                        <input type="date" id="relAnchorDate" class="form-control form-control-sm" style="width: 150px;">
+                                    </div>
+                                    <!--div id="relPeriodLabel" class="text-muted small fw-bold"></div-->
+                                </div>
+                                <div class="pagination-controls d-flex align-items-center gap-3">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="changeRelPage(1)">← Пред.</button>
+                                    <!--span class="fw-bold">Стр: <span id="relPageLabel">0</span></span-->
+                                    <span class="fw-bold" id="relPeriodLabel"></span>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="changeRelPage(-1)">След. →</button>
+                                </div>
+                            </div>
+                            <div id="relativeResult"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="batchAddModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
